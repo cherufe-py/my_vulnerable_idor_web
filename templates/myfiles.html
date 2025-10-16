@@ -1,0 +1,9 @@
+{% extends 'base.html' %}
+{% block body %}
+<h3>Your files</h3>
+<ul>
+  {% for f in files %}
+    <li>{{ f['id'] }} - {{ f['name'] }} - <a href="/file?id={{ f['id'] }}">(vulnerable view)</a> | <a href="/file_secure?id={{ f['id'] }}">(secure view)</a></li>
+  {% endfor %}
+</ul>
+{% endblock %}
