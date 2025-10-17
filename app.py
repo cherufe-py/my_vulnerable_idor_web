@@ -184,7 +184,6 @@ def config_hidden():
             new_value = 'true' if mode == 'secure' else 'false'
 
             db = get_db()
-            # Try update first, if not exists, insert it
             existing = query_db('SELECT value FROM settings WHERE key = ?', ('check_ownership',), one=True)
             if existing:
                 db.execute('UPDATE settings SET value = ? WHERE key = ?', (new_value, 'check_ownership'))
@@ -199,10 +198,8 @@ def config_hidden():
 
             init_db()
 
-    # Fetch current setting from DB
     enabled = is_checking_ownership()
     return render_template("config.html", enabled=enabled)
-
 
 
 if __name__ == '__main__':
