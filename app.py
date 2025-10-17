@@ -1,20 +1,22 @@
 import os
+import shutil
 import uuid
 
 from flask import Flask, request, session, g, redirect, url_for, render_template, send_from_directory
 from werkzeug.utils import secure_filename
 
-from models import get_db, query_db
+from init_db import init_db
+from models import get_db, query_db, get_setting
 
 APP_SECRET = 'dev-secret-for-demo'
 UPLOAD_FOLDER = 'uploads'
-ALLOWED_EXTENSIONS = None  # None = permitir cualquier extensión para el demo
+ALLOWED_EXTENSIONS = None
+SECURE_MODE = False
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = APP_SECRET
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
-# Asegurar carpeta de uploads
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
 
@@ -22,6 +24,11 @@ def allowed_file(filename):
     if ALLOWED_EXTENSIONS is None:
         return True
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+
+def is_checking_ownership():
+    val = get_setting('check_ownership', 'false')
+    return True if (val and val.lower() == 'true') else False
 
 
 @app.teardown_appcontext
@@ -33,7 +40,7 @@ def close_connection(exception):
 
 @app.route('/')
 def index():
-    return render_template('index.html', title='Flask IDOR demo')
+    return render_template('index.html', title='Vulnerable IDOR app.')
 
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -88,22 +95,36 @@ def myfiles():
         return redirect(url_for('login'))
 
     q_user_id = request.args.get('user_id', type=int)
-    target_user_id = q_user_id if q_user_id is not None else session['user_id']
+    if q_user_id is None:
+        target_user_id = session['user_id']
+    else:
+        if is_checking_ownership() and q_user_id != session['user_id']:
+            return 'Forbidden: cannot view other users files', 403
+        target_user_id = q_user_id
 
     files = query_db('SELECT id, name FROM files WHERE user_id = ?', (target_user_id,))
     return render_template('myfiles.html', title=f'Files for user {target_user_id}', files=files)
-
 
 
 # ---------- Vulnerable endpoint ----------
 @app.route('/file')
 def file_vulnerable():
     file_id = request.args.get('id', type=int)
+
     if not file_id:
         return 'Missing id parameter', 400
+
     row = query_db('SELECT id, name, filename, content_type, user_id FROM files WHERE id = ?', (file_id,), one=True)
+
     if not row:
         return 'Not found', 404
+
+    if is_checking_ownership():
+        if 'user_id' not in session:
+            return redirect(url_for('login'))
+        if row['user_id'] != session['user_id']:
+            return 'Forbidden: you do not own this file', 403
+
     filename_on_disk = row['filename']
     if not filename_on_disk:
         return 'File not available', 404
@@ -113,28 +134,65 @@ def file_vulnerable():
     resp.headers['Content-Disposition'] = f'attachment; filename="{display_name}"'
     return resp
 
-# ---------- Secure endpoint ----------
-@app.route('/file_secure')
-def file_secure():
+
+@app.route('/delete', methods=['POST'])
+def delete_insecure():
     if 'user_id' not in session:
         return redirect(url_for('login'))
+
     file_id = request.args.get('id', type=int)
+    if file_id is None:
+        try:
+            file_id = int(request.form.get('id'))
+        except (TypeError, ValueError):
+            file_id = None
+
     if not file_id:
         return 'Missing id parameter', 400
-    row = query_db('SELECT id, name, filename, content_type, user_id FROM files WHERE id = ?', (file_id,), one=True)
+
+    row = query_db('SELECT id, filename FROM files WHERE id = ?', (file_id,), one=True)
     if not row:
         return 'Not found', 404
-    if row['user_id'] != session['user_id']:
-        return 'Forbidden: you do not own this file', 403
+
+    if is_checking_ownership():
+        if row['user_id'] != session['user_id']:
+            return 'Forbidden: you do not own this file', 403
 
     filename_on_disk = row['filename']
-    if not filename_on_disk:
-        return 'File not available', 404
 
-    resp = send_from_directory(app.config['UPLOAD_FOLDER'], filename_on_disk, as_attachment=True)
-    display_name = row['name'] or filename_on_disk
-    resp.headers['Content-Disposition'] = f'attachment; filename="{display_name}"'
-    return resp
+    db = get_db()
+    db.execute('DELETE FROM files WHERE id = ?', (file_id,))
+    db.commit()
+
+    if filename_on_disk:
+        path = os.path.join(app.config['UPLOAD_FOLDER'], filename_on_disk)
+        try:
+            if os.path.exists(path):
+                os.remove(path)
+        except Exception:
+            pass
+
+    return redirect(url_for('myfiles'))
+
+
+@app.route("/config_hidden", methods=["GET", "POST"])
+def config_hidden():
+    global SECURE_MODE
+
+    if request.method == "POST":
+        action = request.form.get("action")
+
+        if action == "save":
+            SECURE_MODE = request.form.get("mode") == "secure"
+
+        elif action == "reset":
+            if os.path.exists(UPLOAD_FOLDER):
+                shutil.rmtree(UPLOAD_FOLDER)
+                os.makedirs(UPLOAD_FOLDER)
+
+            init_db()
+
+    return render_template("config.html", enabled=SECURE_MODE)
 
 
 if __name__ == '__main__':

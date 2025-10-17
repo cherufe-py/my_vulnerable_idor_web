@@ -9,7 +9,7 @@
     <nav>
       {% if session.get('user_id') %}
         <a href="{{ url_for('index') }}">Home</a> |
-        <a href="{{ url_for('myfiles') }}">My files</a> |
+        <a href="{{ url_for('myfiles', user_id=session.get('user_id')) }}">My files</a> |
         <a href="{{ url_for('upload') }}">Upload</a> |
         <a href="{{ url_for('logout') }}">Logout</a>
       {% else %}

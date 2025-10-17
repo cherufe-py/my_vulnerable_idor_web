@@ -3,7 +3,13 @@
 <h3>Your files</h3>
 <ul>
   {% for f in files %}
-    <li>{{ f['id'] }} - {{ f['name'] }} - <a href="/file?id={{ f['id'] }}">(vulnerable view)</a> | <a href="/file_secure?id={{ f['id'] }}">(secure view)</a></li>
+    <li>
+      {{ f['id'] }} - {{ f['name'] }}
+      - <a href="/file?id={{ f['id'] }}">View File</a>
+      <form method="post" action="/delete?id={{ f['id'] }}" style="display:inline" onsubmit="return confirm('Are you sure you want to delete this file?');">
+        <button type="submit">Delete</button>
+      </form>
+    </li>
   {% endfor %}
 </ul>
 {% endblock %}

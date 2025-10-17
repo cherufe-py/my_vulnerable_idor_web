@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+{% block body %}
+<h3>Application Configuration</h3>
+
+<form method="post" style="margin-bottom:1em;">
+  <p>
+    <label>
+      <input type="radio" name="mode" value="insecure" {% if not enabled %}checked{% endif %}>
+      Insecure mode (no ownership check)
+    </label><br>
+    <label>
+      <input type="radio" name="mode" value="secure" {% if enabled %}checked{% endif %}>
+      Secure mode (verify file ownership)
+    </label>
+  </p>
+  <button type="submit" name="action" value="save">Save</button>
+</form>
+
+<!-- Reset form -->
+<form method="post" onsubmit="return confirm('Reset the database and delete all uploaded files? This action cannot be undone.');">
+  <input type="hidden" name="action" value="reset">
+  <button type="submit" style="background-color:#b71c1c; color:white;">Reset DB and Clear Uploads</button>
+</form>
+
+<p>Current status: <strong>{{ 'SECURE' if enabled else 'INSECURE' }}</strong></p>
+{% endblock %}
