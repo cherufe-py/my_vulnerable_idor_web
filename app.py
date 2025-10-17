@@ -51,7 +51,7 @@ def login():
         user = query_db('SELECT * FROM users WHERE username = ?', (username,), one=True)
         if user and user['password'] == password:
             session['user_id'] = user['id']
-            return redirect(url_for('index'))
+            return redirect(url_for('myfiles'))
         else:
             return 'Invalid credentials', 401
     return render_template('login.html', title='Login')
