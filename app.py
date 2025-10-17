@@ -11,7 +11,6 @@ from models import get_db, query_db, get_setting
 APP_SECRET = 'dev-secret-for-demo'
 UPLOAD_FOLDER = 'uploads'
 ALLOWED_EXTENSIONS = None
-SECURE_MODE = False
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = APP_SECRET
@@ -177,13 +176,21 @@ def delete_insecure():
 
 @app.route("/config_hidden", methods=["GET", "POST"])
 def config_hidden():
-    global SECURE_MODE
-
     if request.method == "POST":
         action = request.form.get("action")
 
         if action == "save":
-            SECURE_MODE = request.form.get("mode") == "secure"
+            mode = request.form.get("mode")
+            new_value = 'true' if mode == 'secure' else 'false'
+
+            db = get_db()
+            # Try update first, if not exists, insert it
+            existing = query_db('SELECT value FROM settings WHERE key = ?', ('check_ownership',), one=True)
+            if existing:
+                db.execute('UPDATE settings SET value = ? WHERE key = ?', (new_value, 'check_ownership'))
+            else:
+                db.execute('INSERT INTO settings (key, value) VALUES (?, ?)', ('check_ownership', new_value))
+            db.commit()
 
         elif action == "reset":
             if os.path.exists(UPLOAD_FOLDER):
@@ -192,7 +199,10 @@ def config_hidden():
 
             init_db()
 
-    return render_template("config.html", enabled=SECURE_MODE)
+    # Fetch current setting from DB
+    enabled = is_checking_ownership()
+    return render_template("config.html", enabled=enabled)
+
 
 
 if __name__ == '__main__':
