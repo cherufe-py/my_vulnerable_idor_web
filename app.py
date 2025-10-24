@@ -105,7 +105,6 @@ def myfiles():
     return render_template('myfiles.html', title=f'Files for user {target_user_id}', files=files)
 
 
-# ---------- Vulnerable endpoint ----------
 @app.route('/file')
 def file_vulnerable():
     file_id = request.args.get('id', type=int)
