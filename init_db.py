@@ -37,14 +37,22 @@ def init_db():
         )
     ''')
 
-    cur.execute('INSERT INTO users (username, password) VALUES (?, ?)', ('alice', 'alicepass'))
-    cur.execute('INSERT INTO users (username, password) VALUES (?, ?)', ('bob', 'bobpass'))
+    users = [
+        ('alice', 'alicepass'),
+        ('bob', 'bobpass'),
+        ('charlie', 'charliepass'),
+        ('diana', 'dianapass'),
+        ('eve', 'evepass')
+    ]
+
+    for username, password in users:
+        cur.execute('INSERT INTO users (username, password) VALUES (?, ?)', (username, password))
 
     cur.execute('INSERT INTO settings (key, value) VALUES (?, ?)', ('check_ownership', 'false'))
 
     db.commit()
     db.close()
-    print('Database initialized (example.db). Users seeded, files table empty, settings created.')
+    print('Database initialized with 5 users. Files table empty, settings created.')
 
 
 if __name__ == '__main__':

@@ -7,6 +7,9 @@ RUN pip install -r requirements.txt
 
 COPY . .
 
+RUN python init_db.py && \
+    python add_sample_files.py
+
 EXPOSE 8080
 
 ENV FLASK_APP=app.py
