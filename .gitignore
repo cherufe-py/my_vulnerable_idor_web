@@ -208,3 +208,6 @@ __marimo__/
 
 # IDEs
 .idea
+
+# Project items
+*.db

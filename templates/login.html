@@ -1,8 +1,20 @@
 {% extends 'base.html' %}
 {% block body %}
-<form method="post">
-  <label>Username: <input name="username"></label><br>
-  <label>Password: <input name="password" type="password"></label><br>
-  <button type="submit">Login</button>
-</form>
+<div class="container">
+    <form method="post" class="w-50">
+        <div class="row">
+            <div class="mb-3 col">
+                <label for="username" class="form-label">Username: </label>
+                <input id="username" name="username" class="form-control">
+            </div>
+        </div>
+        <div class="row">
+            <div class="mb-3 col">
+                <label for="password" class="form-label">Password: </label>
+                <input id="password" name="password" type="password" class="form-control">
+            </div>
+        </div>
+        <button type="submit" class="btn btn-primary">Login</button>
+    </form>
+</div>
 {% endblock %}

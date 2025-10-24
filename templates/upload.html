@@ -1,8 +1,20 @@
 {% extends 'base.html' %}
 {% block body %}
-<form method="post" enctype="multipart/form-data">
-  <label>File name (display name, optional): <input name="name"></label><br>
-  <label>Choose file: <input type="file" name="file"></label><br>
-  <button type="submit">Upload</button>
-</form>
+<div class="container">
+    <form method="post" enctype="multipart/form-data" class="w-50">
+        <div class="row">
+            <div class="mb-3 col">
+                <label for="name" class="form-label">File name (display name, optional):</label>
+                <input id="name" name="name" class="form-control">
+            </div>
+        </div>
+        <div class="row">
+            <div class="mb-3 col">
+                <label for="file" class="form-label">Choose file:</label>
+                <input type="file" id="file" name="file" class="form-control">
+            </div>
+        </div>
+        <button type="submit" class="btn btn-primary">Upload</button>
+    </form>
+</div>
 {% endblock %}
