@@ -1,8 +1,8 @@
-import sqlite3
 import os
-import shutil
-from uuid import uuid4
 import random
+import sqlite3
+from uuid import uuid4
+
 from faker import Faker
 
 APP_DB = 'example.db'
@@ -40,7 +40,6 @@ def create_sample_files():
             'content': content
         }
 
-    print(f"✓ Created {len(file_data)} sample files directly in {UPLOAD_FOLDER}/")
     return file_data
 
 
@@ -64,7 +63,6 @@ def add_files_to_database():
 
     cur.execute('SELECT id, username FROM users ORDER BY id')
     users = cur.fetchall()
-    print(f"Available users: {[user[1] for user in users]}")
 
     upload_files = [f for f in os.listdir(UPLOAD_FOLDER) if os.path.isfile(os.path.join(UPLOAD_FOLDER, f))]
 
@@ -109,13 +107,8 @@ def add_files_to_database():
 
 
 def main():
-    print("🚀 Creating sample files with Faker paragraphs in uploads folder...")
-
     create_sample_files()
     add_files_to_database()
-
-    print("Sample files setup completed successfully!")
-    print(f"All files are in the '{UPLOAD_FOLDER}' folder")
 
 
 if __name__ == '__main__':
