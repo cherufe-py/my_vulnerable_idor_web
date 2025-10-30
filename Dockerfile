@@ -1,18 +1,21 @@
 FROM python:3.11-slim
 
+ENV PYTHONUNBUFFERED=1 \
+    PORT=8000 \
+    RUN_HOST=0.0.0.0 \
+    GUNICORN_WORKERS=3 \
+    GUNICORN_TIMEOUT=30 \
+    GUNICORN_LOGLEVEL=info
+
 WORKDIR /app
 
 COPY requirements.txt .
-RUN pip install -r requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt gunicorn
 
 COPY . .
 
-RUN python init_db.py && \
-    python add_sample_files.py
+RUN python init_db.py && python add_sample_files.py
 
-EXPOSE 8080
+EXPOSE ${PORT}
 
-ENV FLASK_APP=app.py
-ENV FLASK_RUN_HOST=0.0.0.0
-ENV FLASK_RUN_PORT=8080
-CMD ["flask", "run"]
+CMD ["gunicorn", "-c", "gunicorn.conf.py", "wsgi:app"]
